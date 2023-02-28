@@ -1,0 +1,4 @@
+python-dotenv==0.21.1
+fastapi
+openai
+uvicorn
