@@ -27,15 +27,10 @@ def model_prediction(text, model):
 app = FastAPI()
 
 
-PRE_PROMPT = """Having these prompts and their coresponding completions into account:
-    
+PRE_PROMPT = """Having these phrases and their coresponding extractions into account:
 
-      en movistar me dan wifi 300 megas por $3000, todavia no cerre
-
-      
-
-
-       {
+PHRASE: en movistar me dan wifi 300 megas por $3000, todavia no cerre
+EXTRACTION: {
         "intent": "InformarCompetencia_Baja",
         "entities": [
           {"entity": "ORG","text": "movistar","value":"MOVISTAR"},
@@ -44,14 +39,10 @@ PRE_PROMPT = """Having these prompts and their coresponding completions into acc
           {"entity": "RECOVERY_SCORING","text": "","value": 7}
         ]
       }
+
       
-
-      me cambie a personal me dan 500 mb con un descuento de 30%
-      
-
-
-
-       {
+PHRASE: me cambie a personal me dan 500 mb con un descuento de 30%
+EXTRACTION: {
         "intent": "InformarCompetenciaYDescuento_Baja",
         "entities": [
             {"text":"personal","value":"PERSONAL_FLOW", "entity": "ORG"},
@@ -62,12 +53,8 @@ PRE_PROMPT = """Having these prompts and their coresponding completions into acc
       }
 
       
-      Me ofrecen todo lo mismo en Cablevisión x menos de la mitad de lo que abono acá
-
-
-
-
-       {
+PHRASE: Me ofrecen todo lo mismo en Cablevisión x menos de la mitad de lo que abono acá
+EXTRACTION: {
         "intent": "InformarCompetenciaYDescuento_Baja",
         "entities": [
             {"text":"Cablevisión Flow","value":"PERSONAL_FLOW", "entity": "ORG"},
@@ -76,6 +63,19 @@ PRE_PROMPT = """Having these prompts and their coresponding completions into acc
             {"text":"","value": 2, "entity": "RECOVERY_SCORING"}
           ]
       }
+
+PHRASE: ustedes me cobran 300mb por $5000 y movistar me cobra $4000 por 1000mb
+EXTRACTION: {
+        "intent": "InformarCompetenciaYDescuento_Baja",
+        "entities": [
+            {"text":"movistar","value":"MOVISTAR", "entity": "ORG"},
+            {"text":"1000mb","value":"INTERNET_1000_MB", "entity": "SERVICE"},
+            {"text":"$4000","value":"4000", "entity": "PRICE"},
+            {"text":"","value": 2, "entity": "RECOVERY_SCORING"},
+            {"text":"300mb","value":"INTERNET_300_MB", "entity": "ACTUAL_SERVICE"},
+            {"text":"$5000","value":"5000", "entity": "ACTUAL_PRICE"}
+          ]
+}
 
     What would be the same completion for NEW_PROMPT?
 
