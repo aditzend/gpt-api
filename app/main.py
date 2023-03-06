@@ -27,61 +27,45 @@ def model_prediction(text, model):
 app = FastAPI()
 
 
-PRE_PROMPT = """Having these prompts and their coresponding completions into account:
-    
+PRE_PROMPT = """
+    You are an intent classification model.
+    Given the following list of intents INTENT_LIST and a user input USER_INPUT, 
+    predict the intent of the user input.
 
-      en movistar me dan wifi 300 megas por $3000, todavia no cerre
+    Give the confidence level of each of your predictions. 
+    Choose intents from the list of intents and only from the list of intents.
+    Intent name creation is not allowed.
+    You have to be really sure about the intent you are predicting, otherwise
+    you can respond with the following JSON object:
+    {
+        "intent": "kb",
+        "confidence": 0.7
+    }
 
-      
-
-
-       {
-        "intent": "InformarCompetencia_Baja",
-        "entities": [
-          {"entity": "ORG","text": "movistar","value":"MOVISTAR"},
-          {"entity": "SERVICE","text": "wifi 300 megas","value":"INTERNET_300_MB"},
-          {"entity": "PRICE","text": "$3000","value":"3000"},
-          {"entity": "RECOVERY_SCORING","text": "","value": 7}
-        ]
-      }
-      
-
-      me cambie a personal me dan 500 mb con un descuento de 30%
-      
-
-
-
-       {
-        "intent": "InformarCompetenciaYDescuento_Baja",
-        "entities": [
-            {"text":"personal","value":"PERSONAL_FLOW", "entity": "ORG"},
-            {"text":"500 mb","value":"INTERNET_500_MB", "entity": "SERVICE"},
-            {"text":"30%","value":"30", "entity": "DISCOUNT_PERCENTAGE"},
-            {"text":"","value": 5, "entity": "RECOVERY_SCORING"}
-          ]
-      }
-
-      
-      Me ofrecen todo lo mismo en Cablevisión x menos de la mitad de lo que abono acá
-
-
-
-
-       {
-        "intent": "InformarCompetenciaYDescuento_Baja",
-        "entities": [
-            {"text":"Cablevisión Flow","value":"PERSONAL_FLOW", "entity": "ORG"},
-            {"text":"todo lo mismo","value":"SAME", "entity": "SERVICE"},
-            {"text":"x menos de la mitad","value":"50", "entity": "DISCOUNT_PERCENTAGE"},
-            {"text":"","value": 2, "entity": "RECOVERY_SCORING"}
-          ]
-      }
-
-    What would be the same completion for NEW_PROMPT?
+    INTENT_LIST
+    [
+        "InformariMisPuntos_InfraccionesTransito",
+        "InformarCostoLicencia_LicenciasDeConducir",
+        "InformarInfracciones_InfraccionesTransito",
+        "InformarActualizar_LicenciasDeConducir",
+        "InformarCursovial_LicenciasDeConducir",
+        "InformarEstadoLicencia_LicenciasDeConducir",
+        "InformarExtranjero_LicenciasDeConducir",
+        "InformarLegalizar_LicenciasDeConducir",
+        "InformarLibreDeuda_InfraccionesTransito",
+        "InformarMudanza_LicenciasDeConducir",
+        "InformarRobo_LicenciasDeConducir",
+        "InformarVacunas_Vacunas",
+        "OtorgarTramiteLicencia_LicenciasDeConducir",
+        "Saludo",
+    ]
 
     Only respond with a valid JSON object and nothing else.
 
-    NEW_PROMPT = 'prompt_placeholder'
+    USER_INPUT = 'prompt_placeholder'
+
+    Think step by step and be very careful with your predictions.
+    Go!
     """
 
 
@@ -105,22 +89,14 @@ async def parse_text(request: RasaModelParseRequest):
         p = json.loads(openai_response)
         print(type(p))
         print(p)
-        entities = []
-        if "entities" in p:
-            entities = p["entities"]
-            if entities:
-                for entity in entities:
-                    entity["start"] = request.text.find(entity["text"])
-                    entity["end"] = entity["start"] + len(entity["text"])
-                    entity["confidence"] = 1.0
         response = {
             "text": request.text,
             "intent": {
                 "id": -999,
                 "name": p["intent"],
-                "confidence": 1.0,
+                "confidence": p["confidence"],
             },
-            "entities": entities,
+            "entities": [],
             "intent_ranking": [],
         }
     return response
