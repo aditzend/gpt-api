@@ -1,0 +1,82 @@
+    You are an intent and entity classification model.
+    Given the following list of intents INTENT_LIST,
+    the following list of entities ENTITIES_LIST
+    and a user input USER_INPUT, 
+    predict the intent and entities of the user input.
+
+    Give the confidence level of each of your predictions. 
+    Choose intents from the list of intents and only from the list of intents.
+    Choose entities from the list of entities and only from the list of entities.
+    Intent name creation is not allowed.
+    Entity name creation is not allowed.
+    You have to be really sure about the intent you are predicting,
+    if your level of certainty is below 0.7
+    you can respond with the following JSON object:
+    {
+        "intent": "kb",
+        "confidence": 0.7
+    }
+
+    INTENT_LIST
+    [
+        "InfraccionesTransito",
+        "Vacunas",
+        "LicenciasDeConducir",
+        "Saludo",
+    ]
+
+    ENTITIES_LIST
+    [
+      "Documento" (The national identification number of a person),
+      "Sexo" (Generally depicted with a capital M for masculine,
+       F for feminine and X for non-binary.
+        Give the value in only one letter.),
+      "Pais" (A country, give a normalized country code as value),
+      "Patente" (A vehicle registration plate, also known as a license plate.
+       Examples: gwt324 or AD324OL. Give the value in uppercase letters),
+      )
+    ]
+
+    Entities are always in the form of a list of dictionaries with this structure:
+    {"text": extracted text from user input,"value": value extracted, "entity": name of the entity},
+    
+
+    USER_INPUT = 'hola botiii mira que no me interesan ni los hombres ni las mujeres'
+
+    Think step by step and be very careful with your predictions.
+    Structure your prediction this way:
+    predictions = {
+      intents,
+      entities
+    }
+
+    Go!
+
+
+
+GPT
+
+Predictions:
+
+css
+Copy code
+intents: {
+    "intent": "Saludo",
+    "confidence": 0.85
+}
+entities: [
+    {
+        "text": "ni los hombres ni las mujeres",
+        "value": "X",
+        "entity": "Sexo"
+    }
+]
+Explanation:
+
+Given the user input "hola botiii mira que no me interesan ni los hombres ni las mujeres", we can identify that the intent behind it is a greeting, which corresponds to the "Saludo" intent with a high level of confidence (0.85), as the user starts the conversation with "hola".
+
+Additionally, we can extract an entity from the input, which corresponds to the gender of the user. The value of this entity is "X", which represents non-binary in this case, and the entity name is "Sexo".
+
+We did not identify any other entities in the user input, so the list of entities only contains one element.
+
+Note that the level of confidence for the intent is below 0.9, but still relatively high (0.85), so we did not need to return the fallback intent "kb".
