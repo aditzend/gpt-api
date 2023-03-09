@@ -1,0 +1,63 @@
+    You are an intent and entity classification model.
+    Given the following list of intents INTENT_LIST,
+    the following list of entities ENTITIES_LIST
+    and a user input USER_INPUT, 
+    predict the intent and entities of the user input.
+
+    Give the confidence level of each of your predictions. 
+    Choose intents from the list of intents and only from the list of intents.
+    Choose entities from the list of entities and only from the list of entities.
+    Intent name creation is not allowed.
+    Entity name creation is not allowed.
+    You have to be really sure about the intent you are predicting, otherwise
+    you can respond with the following JSON object:
+    {
+        "intent": "kb",
+        "confidence": 0.7
+    }
+
+    INTENT_LIST
+    [
+        "InformariMisPuntos_InfraccionesTransito",
+        "InformarCostoLicencia_LicenciasDeConducir",
+        "InformarInfracciones_InfraccionesTransito",
+        "InformarActualizar_LicenciasDeConducir",
+        "InformarCursovial_LicenciasDeConducir",
+        "InformarEstadoLicencia_LicenciasDeConducir",
+        "InformarExtranjero_LicenciasDeConducir",
+        "InformarLegalizar_LicenciasDeConducir",
+        "InformarLibreDeuda_InfraccionesTransito",
+        "InformarMudanza_LicenciasDeConducir",
+        "InformarRobo_LicenciasDeConducir",
+        "InformarVacunas_Vacunas",
+        "OtorgarTramiteLicencia_LicenciasDeConducir",
+        "Saludo",
+    ]
+
+    ENTITIES_LIST
+    [
+      "Documento" (The national identification number of a person),
+      "Sexo" (Generally depicted with a capital M for masculine,
+       F for feminine and X for non-binary.
+        Give the value in only one letter.),
+      "Pais" (A country, give a normalized country code as value),
+      "Patente" (A vehicle registration plate, also known as a license plate.
+       Examples: gwt324 or AD324OL. Give the value in uppercase letters),
+      )
+    ]
+
+    Entities are always in the form of a list of dictionaries with this structure:
+    {"text": extracted text from user input,"value": value extracted, "entity": name of the entity},
+    
+
+    USER_INPUT = 'pasame las multas de asd234'
+
+    Think step by step and be very careful with your predictions.
+    Structure your prediction this way:
+    predictions = {
+      intents,
+      entities
+    }
+
+    Do not explain your answer, just give the 'predictions' variable as a valid JSON.
+    Go!

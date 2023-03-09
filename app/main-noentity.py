@@ -28,17 +28,13 @@ app = FastAPI()
 
 
 PRE_PROMPT = """
-    You are an intent and entity classification model.
-    Given the following list of intents INTENT_LIST,
-    the following list of entities ENTITIES_LIST
-    and a user input USER_INPUT, 
-    predict the intent and entities of the user input.
+    You are an intent classification model.
+    Given the following list of intents INTENT_LIST and a user input USER_INPUT, 
+    predict the intent of the user input.
 
     Give the confidence level of each of your predictions. 
     Choose intents from the list of intents and only from the list of intents.
-    Choose entities from the list of entities and only from the list of entities.
     Intent name creation is not allowed.
-    Entity name creation is not allowed.
     You have to be really sure about the intent you are predicting, otherwise
     you can respond with the following JSON object:
     {
@@ -64,17 +60,6 @@ PRE_PROMPT = """
         "Saludo",
     ]
 
-    ENTITIES_LIST
-    [
-      "Documento" (The national identification number of a person),
-      "Sexo" (Generally depicted with a capital M for masculine, F for feminine and X for non-binary. Give the value in only one letter.),
-      "Pais" (A country, give a normalized country code as value),
-      "Patente" (A vehicle registration plate, also known as a license plate. Examples: ASD324 or AD324OL),
-      )
-    ]
-
-    Entities are always in the form of a list of dictionaries with this structure:
-    {"text": extracted text from user input,"value": value extracted, "entity": name of the entity},
     Only respond with a valid JSON object and nothing else.
 
     USER_INPUT = 'prompt_placeholder'
@@ -104,14 +89,6 @@ async def parse_text(request: RasaModelParseRequest):
         p = json.loads(openai_response)
         print(type(p))
         print(p)
-        entities = []
-        if "entities" in p:
-            entities = p["entities"]
-            if entities:
-                for entity in entities:
-                    entity["start"] = request.text.find(entity["text"])
-                    entity["end"] = entity["start"] + len(entity["text"])
-                    entity["confidence"] = 1.0
         response = {
             "text": request.text,
             "intent": {
@@ -119,7 +96,7 @@ async def parse_text(request: RasaModelParseRequest):
                 "name": p["intent"],
                 "confidence": p["confidence"],
             },
-            "entities": entities,
+            "entities": [],
             "intent_ranking": [],
         }
     return response
