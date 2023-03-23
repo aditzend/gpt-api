@@ -5,7 +5,7 @@ import openai
 import os
 from fastapi.encoders import jsonable_encoder
 from langchain.prompts import load_prompt
-from autoform import fill_form
+from autoforms import out_of_scope
 from classification import classify_intent_extract_entities
 import requests
 
@@ -103,7 +103,7 @@ async def version():
 @app.post("/v2/autoform")
 async def autoformv2(body: AutoformDto):
     seh = await sentiment_emotion_hate(body.user_input)
-    form_response = await fill_form(
+    form_response = await out_of_scope(
         user_input=jsonable_encoder(body.user_input),
         slots_to_fill=jsonable_encoder(body.slots_to_fill),
         slots_filled=jsonable_encoder(body.slots_filled),

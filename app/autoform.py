@@ -1,4 +1,5 @@
 from langchain.prompts import load_prompt
+from langchain import PromptTemplate
 from langchain.llms import OpenAI
 import json
 import os
