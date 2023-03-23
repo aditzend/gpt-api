@@ -28,8 +28,6 @@
     CONVERSATION = {
       utterances: [
         {ACTOR: "USER", TEXT: "Hola quiero empezar el proceso de formulario de turnos"},
-        {ACTOR: "ASSISTANT", TEXT: "¡Hola! 👋 ¿Podrías proporcionarme tu número de documento? 🤔 Debe tener entre 5 y 8 dígitos. Por ejemplo: '29123234'."},
-        {ACTOR: "USER", TEXT: "29 884556"},
       ],
       slots: []
 

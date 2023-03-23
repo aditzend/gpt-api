@@ -1,14 +1,19 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import json
-import re
 import openai
 import os
+from fastapi.encoders import jsonable_encoder
+from langchain.prompts import load_prompt
+from autoform import fill_form
+from classification import classify_intent_extract_entities
+import requests
+
 from dotenv import load_dotenv
 
 load_dotenv()
-
 openai.api_key = os.getenv("OPENAI_API_KEY")
+sentiment_url = os.getenv("SENTIMENT_URL")
 
 
 def model_prediction(text, model):
@@ -27,81 +32,157 @@ def model_prediction(text, model):
 app = FastAPI()
 
 
-PRE_PROMPT = """
-    You are an intent and entity classification model.
-    Given the following list of intents INTENT_LIST,
-    the following list of entities ENTITIES_LIST
-    and a user input USER_INPUT, 
-    predict the intent and entities of the user input.
-
-    Give the confidence level of each of your predictions. 
-    Choose intents from the list of intents and only from the list of intents.
-    Choose entities from the list of entities and only from the list of entities.
-    Intent name creation is not allowed.
-    Entity name creation is not allowed.
-    You have to be really sure about the intent you are predicting, otherwise
-    you can respond with the following JSON object:
-    {
-        "intent": "kb",
-        "confidence": 0.7
-    }
-
-    INTENT_LIST
-    [
-        "InformariMisPuntos_InfraccionesTransito",
-        "InformarCostoLicencia_LicenciasDeConducir",
-        "InformarInfracciones_InfraccionesTransito",
-        "InformarActualizar_LicenciasDeConducir",
-        "InformarCursovial_LicenciasDeConducir",
-        "InformarEstadoLicencia_LicenciasDeConducir",
-        "InformarExtranjero_LicenciasDeConducir",
-        "InformarLegalizar_LicenciasDeConducir",
-        "InformarLibreDeuda_InfraccionesTransito",
-        "InformarMudanza_LicenciasDeConducir",
-        "InformarRobo_LicenciasDeConducir",
-        "InformarVacunas_Vacunas",
-        "OtorgarTramiteLicencia_LicenciasDeConducir",
-        "Saludo",
-    ]
-
-    ENTITIES_LIST
-    [
-      "Documento" (The national identification number of a person),
-      "Sexo" (Generally depicted with a capital M for masculine, F for feminine and X for non-binary. Give the value in only one letter.),
-      "Pais" (A country, give a normalized country code as value),
-      "Patente" (A vehicle registration plate, also known as a license plate. Examples: ASD324 or AD324OL),
-      )
-    ]
-
-    Entities are always in the form of a list of dictionaries with this structure:
-    {"text": extracted text from user input,"value": value extracted, "entity": name of the entity},
-    Only respond with a valid JSON object and nothing else.
-
-    USER_INPUT = 'prompt_placeholder'
-
-    Think step by step and be very careful with your predictions.
-    Go!
-    """
+class Intent(BaseModel):
+    name: str
+    description: str
 
 
-class RasaModelParseRequest(BaseModel):
+class SlotToFill(BaseModel):
+    name: str
+    description: str
+
+
+class SlotFilled(BaseModel):
+    name: str
+    value: str
+
+
+class Entity(BaseModel):
+    name: str
+    description: str
+
+
+class ExtractIntentAndEntitiesDto(BaseModel):
+    user_input: str
+    intents: list[Intent]
+    entities: list[Entity]
+
+
+class ClassifyIntentExtractEntitiesV2Dto(BaseModel):
+    session_id: str
+    personality: str
+    user_input: str
+    intents: list[Intent]
+    entities: list[Entity]
+
+
+class IntentEntitiesDto(BaseModel):
+    intent: dict
+    entities: list[dict]
+
+
+class AutoformDto(BaseModel):
+    session_id: str
+    user_input: str
+    slots_to_fill: list[SlotToFill]
+    slots_filled: list[SlotFilled]
+    personality: str
+
+
+class SentimentDto(BaseModel):
     text: str
-    message_id: str
-    lang: str
 
 
-@app.post("/model/parse")
-async def parse_text(request: RasaModelParseRequest):
+async def sentiment_emotion_hate(text):
+    endpoint = sentiment_url + "/full/"
+    response = requests.post(endpoint, json={"text": text})
+    return response.json()
 
-    pre_prompt = PRE_PROMPT
 
-    prompt = pre_prompt.replace("prompt_placeholder", request.text)
+@app.post("/v2/sentiment")
+async def sentiment_full(request: SentimentDto):
+    response = await sentiment_emotion_hate(request.text)
+    return response
 
-    openai_response = model_prediction(text=prompt, model="text-davinci-003")
 
-    response = openai_response
+@app.get("/version")
+async def version():
+    return {"message": "2: sentiment"}
+
+
+@app.post("/v2/autoform")
+async def autoformv2(body: AutoformDto):
+    seh = await sentiment_emotion_hate(body.user_input)
+    form_response = await fill_form(
+        user_input=jsonable_encoder(body.user_input),
+        slots_to_fill=jsonable_encoder(body.slots_to_fill),
+        slots_filled=jsonable_encoder(body.slots_filled),
+        personality=jsonable_encoder(body.personality),
+    )
+    response = {
+        "session_id": body.session_id,
+        "user_input": body.user_input,
+        "sentiment": seh["sentiment"],
+        "emotion": seh["emotion"],
+        "hate_speech": seh["hate_speech"],
+        **form_response,
+    }
+    return response
+
+
+class ClassificationDto(BaseModel):
+    confidence: float
+    intent: str
+    entities: list[Entity]
+
+
+@app.post("/v2/extract_intent_and_entities")
+async def classify_v2(request: ClassifyIntentExtractEntitiesV2Dto):
+    moderation = openai.Moderation.create(input=request.user_input)
+    flagged = moderation["results"][0]["flagged"]
+    if flagged:
+        return moderation["results"][0]
+
+    classify_response: IntentEntitiesDto = (
+        await classify_intent_extract_entities(
+            user_input=jsonable_encoder(request.user_input),
+            intents=jsonable_encoder(request.intents),
+            entities=jsonable_encoder(request.entities),
+        )
+    )
+    seh_response = await sentiment_emotion_hate(request.user_input)
+
+    if classify_response:
+        entities = []
+        if "entities" in classify_response:
+            entities = classify_response["entities"]
+            if entities:
+                for entity in entities:
+                    entity["start"] = request.user_input.find(entity["text"])
+                    entity["end"] = entity["start"] + len(entity["text"])
+        response = {
+            "session_id": request.session_id,
+            "user_input": request.user_input,
+            "sentiment": seh_response["sentiment"],
+            "emotion": seh_response["emotion"],
+            "hate_speech": seh_response["hate_speech"],
+            "intent": classify_response["intent"],
+            "entities": entities,
+        }
+    return response
+
+
+@app.post("/v1/extract_intent_and_entities")
+async def parse_text(request: ExtractIntentAndEntitiesDto):
+    intents = jsonable_encoder(request.intents)
+    entities = jsonable_encoder(request.entities)
+    prompt = load_prompt("./prompts/classifier.json")
+
+    hydrated = prompt.format(
+        user_input=request.user_input,
+        intents=intents,
+        entities=entities,
+    )
+    openai_response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "user", "content": hydrated},
+        ],
+    )
+
+    content = openai_response.choices[0].message.content
     if openai_response:
-        p = json.loads(openai_response)
+        p = json.loads(content)
         print(type(p))
         print(p)
         entities = []
@@ -109,17 +190,55 @@ async def parse_text(request: RasaModelParseRequest):
             entities = p["entities"]
             if entities:
                 for entity in entities:
-                    entity["start"] = request.text.find(entity["text"])
+                    entity["start"] = request.user_input.find(entity["text"])
                     entity["end"] = entity["start"] + len(entity["text"])
                     entity["confidence"] = 1.0
         response = {
-            "text": request.text,
+            "user_input": request.user_input,
             "intent": {
-                "id": -999,
                 "name": p["intent"],
                 "confidence": p["confidence"],
             },
             "entities": entities,
-            "intent_ranking": [],
         }
     return response
+
+
+# @app.post("/v1/autoform")
+# async def autoform(request: AutoformDto):
+#     slots_to_fill = jsonable_encoder(request.slots_to_fill)
+#     slots_filled = jsonable_encoder(request.slots_filled)
+#     hydrated = prompt.format(
+#         user_input=request.user_input,
+#         slots_to_fill=slots_to_fill,
+#         slots_filled=slots_filled,
+#     )
+#     openai_response = openai.ChatCompletion.create(
+#         model="gpt-3.5-turbo",
+#         messages=[
+#             {"role": "user", "content": hydrated},
+#         ],
+#     )
+
+#     content = openai_response.choices[0].message.content
+#     if openai_response:
+#         p = json.loads(content)
+#         print(type(p))
+#         print(p)
+#         entities = []
+#         if "entities" in p:
+#             entities = p["entities"]
+#             if entities:
+#                 for entity in entities:
+#                     entity["start"] = request.user_input.find(entity["text"])
+#                     entity["end"] = entity["start"] + len(entity["text"])
+#                     entity["confidence"] = 1.0
+#         response = {
+#             "user_input": request.user_input,
+#             "intent": {
+#                 "name": p["intent"],
+#                 "confidence": p["confidence"],
+#             },
+#             "entities": entities,
+#         }
+#     return response

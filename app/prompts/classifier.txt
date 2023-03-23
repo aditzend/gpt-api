@@ -1,0 +1,32 @@
+You are an intent and entity classification model.
+Given the following list of intents INTENT_LIST,
+the following list of entities ENTITIES_LIST
+and a user input USER_INPUT, 
+predict the intent and entities of the user input.
+
+Give the confidence level of each of your predictions. 
+Choose intents from the list of intents and only from the list of intents.
+Choose entities from the list of entities and only from the list of entities.
+Intent name creation is not allowed.
+Entity name creation is not allowed.
+You have to be really sure about the intent you are predicting, otherwise
+you can respond with the following JSON object:
+
+    "intent": "Redirigir_BaseDeConocimiento",
+    "confidence": 0.7
+
+
+INTENT_LIST = {intents}
+
+ENTITIES_LIST = {entities}
+
+Entities are always in the form of a list of dictionaries with this structure:
+"text": extracted text from user input,"value": value extracted, "entity": name of the entity
+Only respond with a valid JSON object and nothing else.
+
+USER_INPUT = "{user_input}"
+
+Think step by step and be very careful with your predictions.
+Do not explain yourself, just give me a valid JSON as your response.
+
+Go!

@@ -1,0 +1,5 @@
+{
+  "_type": "prompt",
+  "input_variables": ["user_input", "intents", "entities"],
+  "template_path": "./prompts/classifier.txt"
+}

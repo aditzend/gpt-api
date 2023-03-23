@@ -1,0 +1,10 @@
+{
+  "_type": "prompt",
+  "input_variables": [
+    "user_input",
+    "slots_to_fill",
+    "slots_filled",
+    "personality"
+  ],
+  "template_path": "prompts/autoform.txt"
+}

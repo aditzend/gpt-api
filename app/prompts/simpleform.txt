@@ -1,0 +1,9 @@
+simple 
+
+'SLOTS_TO_FILL' = {slots_to_fill} 
+
+`SLOTS_FILLED` = {slots_filled} 
+
+"USER_INPUT" = {user_input}
+
+
