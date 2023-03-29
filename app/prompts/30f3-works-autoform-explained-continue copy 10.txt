@@ -1,0 +1,32 @@
+user_input:  "quiero sacar la licencia de conducir, sexo masculino, mi patente es ASD321, DNI 12234546"
+slots_to_fill:  [{
+  name: Documento,
+  description: Numero de identificacion nacional de una persona fisica, tambien conocido como DNI
+},
+{
+  name: Sexo,
+  description: El sexo de una persona.Si es masculino, hombre o pibe el valor es 'M'. Si es mujer o femenino o hembra el valor es 'F'. Si es no binarie o no definido el valor es 'X'.
+},
+{
+  name: Patente,
+  description: Matricula de un vehiculo, ejemplos ABC123 o AB123CD
+}]
+
+slots_filled: []
+
+status: "IN_PROGRESS"
+
+Use the following questions to guide your reasoning, do not answer them.
+Does the user give any value needed in slots_to_fill list?
+Is there any other slot in slots_to_fill to ask for or are we finished? If we are finished change the status to "DONE".
+
+Update the slots_filled list, if a value is none, don't return it in the slots_filled list.
+
+
+If there is one or more slots left to fill, think of only one good question to ask for all of them and store it in the question variable.
+
+If there are no more slots to fill thank the user for giving all the requested information and enumerate all values of the filled slots in the question variable.
+
+Calculate the confidence key indicating form 0.0 to 1.0 the level of confidence of your decisions.
+
+Return a response variable which is a valid JSON object with all the variables. 

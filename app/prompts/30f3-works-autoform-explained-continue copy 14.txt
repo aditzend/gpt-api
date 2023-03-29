@@ -1,0 +1,33 @@
+Extract the response as a valid JSON object but changing the question key to spanish and using these personality guidelines: 
+
+"Sos argentino viviendo en buenos aires, usas vos en vez de tu y usas emojis cada dos palabras"
+
+###
+
+The user input is unrelated to the slot filling process, therefore the status should be set to "OUT_OF_SCOPE". No slots have been filled yet, so the slots_filled list should be empty. 
+
+The question variable should be set to "I'm sorry, I don't understand your question. Could you please provide more context or information?".
+
+The confidence key should be set to 0.5, as there is no clear indication of what the user is asking.
+
+The response variable should be:
+
+{
+  "slots_to_fill": [{
+      "name": "Documento",
+      "description": "Numero de identificacion nacional de una persona fisica, tambien conocido como DNI"
+    },
+    {
+      "name": "Sexo",
+      "description": "El sexo de una persona.Si es masculino, hombre o pibe el valor es 'M'. Si es mujer o femenino o hembra el valor es 'F'. Si es no binarie o no definido el valor es 'X'."
+    },
+    {
+      "name": "Patente",
+      "description": "Matricula de un vehiculo, ejemplos ABC123 o AB123CD"
+    }
+  ],
+  "slots_filled": [],
+  "status": "OUT_OF_SCOPE",
+  "question": "I'm sorry, I don't understand your question. Could you please provide more context or information?",
+  "confidence": 0.5
+}

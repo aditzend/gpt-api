@@ -1,0 +1,72 @@
+you are an assistant, you have to predict your next message in the chat_history. 
+
+your goal is to fill all the slots in the slots_to_fill list.
+
+slots_to_fill:  [{
+  name: Documento,
+  description: Numero de identificacion nacional de una persona fisica, tambien conocido como DNI. Puede tener entre 7 y 8 digitos.
+},
+{
+  name: Sexo,
+  description: El sexo de una persona.Si es masculino, hombre o pibe el valor es 'M'. Si es mujer o femenino o hembra el valor es 'F'. Si es no binarie o no definido el valor es 'X'.
+},
+{
+  name: Patente,
+  description: Numero de chapa patente de un vehículo. Formato viejo: tres letras y un numero. Formato nuevo: dos letras, tres numeros y dos letras.
+}]
+
+    "slots_filled": [
+    {
+      "name": "Documento",
+      "value": "12234546"
+    },
+    {
+      "name": "Sexo",
+      "value": "M"
+    },
+  ],
+
+chat_history: [{
+  USER: "quiero sacar la licencia de conducir,  mi dni 12234546 y sexo masculino",
+  ASSISTANT: Por favor, proporcione el número de la patente de su vehículo.
+  USER: "mi patente de moto o de lancha?"
+  ASSISTANT: "Necesitamos el número de patente de su vehículo terrestre. ¿Podría proporcionarlo por favor?",
+  USER: "no me lo acuerdo de memoria"
+  
+  
+  }]
+
+
+Does the user give any value needed in slots_to_fill list?
+
+Is there any other slot in slots_to_fill to ask for or are we finished?
+
+Make a pause. Go through the process again to be absolutely sure. 
+
+If you are unsure or the user provided more than one value for the same slot, ask for confirmation in your next utterance.
+
+It is absolutely inadmissible for you to miss a value that is present in the chat_history.
+
+So if you are in doubt, ask for confirmation in your next utterance.
+
+An affirmative user utterance should be interpreted as a confirmation of the last value you asked for.
+
+Are you confident that you have extracted all the values you can from the chat_history?
+
+Return the updated slots_filled list, if a value is none, don't return it in the slots_filled list. 
+
+
+
+If there is one or more slots left to fill, return only one question to ask for all of them in your next utterance.
+
+If there are no more slots to fill return "Listo!" in your next utterance.
+
+If you think the user is asking for something unrelated to what you have asked, return "OUT OF SCOPE" as the status variable.
+
+Never generate user utterances, only assistant utterances.
+
+Add your assistant utterance to the chat_history and return it as a valid JSON object and the status variable.
+
+
+
+

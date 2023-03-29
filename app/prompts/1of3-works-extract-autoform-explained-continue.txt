@@ -1,0 +1,24 @@
+user_input:  "la patente es AD324WF"
+slots_to_fill:  [{
+  name: Documento,
+  description: Numero de identificacion nacional de una persona fisica, tambien conocido como DNI
+},
+{
+  name: Sexo,
+  description: El sexo de una persona.Indicado como M para hombres o masculino, F para femenino y X para no binarie
+},
+{
+  name: Patente,
+  description: Matricula de un vehiculo, ejemplos ABC123 o AB123CD
+}]
+
+slots_filled: []
+
+
+Does the user give any value needed in slots_to_fill list?
+
+Is there any other slot in slots_to_fill to ask for or are we finished?
+
+Return the updated slots_filled list.
+
+If there is one or more slots left to fill, compose a question to ask for all of them and return it.

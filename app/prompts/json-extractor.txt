@@ -1,0 +1,52 @@
+Extract the response as a valid JSON object.
+
+
+
+
+The user gives values for the Documento, Sexo, and Patente slots. 
+
+There are no more slots to ask for, we are finished.
+
+Update the slots_filled list with the values provided by the user:
+
+slots_filled: [
+  {
+    name: Documento,
+    value: 12234546
+  },
+  {
+    name: Sexo,
+    value: 'M'
+  },
+  {
+    name: Patente,
+    value: 'ASD321'
+  }
+]
+
+Thank the user for providing all the requested information and enumerate all values of the filled slots:
+
+question = "Gracias por proporcionar toda la información necesaria. Los valores son: Documento: 12234546, Sexo: M, Patente: ASD321."
+
+Confidence key: 0.9 (high confidence, as all slots were filled with clear values)
+
+Response:
+
+{
+  "question": "Gracias por proporcionar toda la información necesaria. Los valores son: Documento: 12234546, Sexo: M, Patente: ASD321.",
+  "slots_filled": [
+    {
+      "name": "Documento",
+      "value": 12234546
+    },
+    {
+      "name": "Sexo",
+      "value": "M"
+    },
+    {
+      "name": "Patente",
+      "value": "ASD321"
+    }
+  ],
+  "confidence": 0.9
+}
