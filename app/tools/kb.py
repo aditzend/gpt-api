@@ -77,14 +77,14 @@ def kb_qa(query):
 
 
 async def route_resource_to_loader(resource):
-    if resource["type"] == "HTML":
+    if resource["type"] == "html":
         return WebBaseLoader(resource["url"])
-    if resource["type"] == "DOCX":
+    if resource["type"] == "docx":
         response = await download_docx_file_and_ingest(resource)
         return response
 
 
-async def ingest(resources):
+async def retrieval_ingest(resources):
     print(f"INGESTING: {resources} | Ingesting knowledge base...")
     loaders = [
         await route_resource_to_loader(resource) for resource in resources
@@ -126,6 +126,7 @@ def ask_retrieval(user_input, session_id, personality):
 def ask_conversational(user_input, session_id, personality):
     print(f"QUESTION: {user_input} | Querying conversational model...")
     chat_history = get_chat_history(session_id)
+    print(f"\n Chat history for session {session_id}: {chat_history}\n")
     result = qa({"question": user_input, "chat_history": chat_history})
     add_message_to_chat_history(
         session_id, user_message=user_input, response=result["answer"]

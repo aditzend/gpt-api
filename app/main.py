@@ -20,7 +20,7 @@ import requests
 
 from tools.kb import (
     ask_retrieval,
-    ingest,
+    retrieval_ingest,
     ask_conversational,
     conversational_ingest,
 )
@@ -145,6 +145,7 @@ class KbIngestDto(BaseModel):
 async def kb_ingest(request: KbIngestDto):
     resources = jsonable_encoder(request.resources)
     response = await conversational_ingest(resources)
+    # response = await retrieval_ingest(resources)
     return response
 
 
@@ -167,6 +168,11 @@ async def kb_ask(request: KbAskDto):
         session_id=request.session_id,
         personality=request.personality,
     )
+    # kb_response = ask_retrieval(
+    #     user_input=request.user_input,
+    #     session_id=request.session_id,
+    #     personality=request.personality,
+    # )
     seh = await sentiment_emotion_hate(request.user_input)
     response = {
         "session_id": request.session_id,
