@@ -26,6 +26,9 @@ from tools.kb import (
 )
 from tools.moderation import get_moderation_intent_entities
 
+from tools.emotions import classify_2_emotions_score_d
+from tools.openaidirect import system_completion_v1_turbo_t0
+
 import os
 from dotenv import load_dotenv
 
@@ -182,4 +185,31 @@ async def kb_ask(request: KbAskDto):
         "hate_speech": seh["hate_speech"],
         **kb_response,
     }
+    return response
+
+
+class ExtractEmotionsDto(BaseModel):
+    user_input: str
+    emotions: list
+
+
+@app.post("/v3/emotions")
+async def extract_emotions(request: ExtractEmotionsDto):
+    user_input = jsonable_encoder(request.user_input)
+    emotions = jsonable_encoder(request.emotions)
+    response = await classify_2_emotions_score_d(
+        emotions=emotions, user_input=user_input
+    )
+    return response
+
+
+class SystemPromptDto(BaseModel):
+    prompt: str
+
+
+@app.post("/v3/system/completion")
+async def system_completion(request: SystemPromptDto):
+    prompt = jsonable_encoder(request.prompt)
+    response = await system_completion_v1_turbo_t0(content=prompt)
+    response = {"content": response}
     return response

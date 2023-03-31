@@ -1,5 +1,0 @@
-_type: prompt
-input_variables:
-    ["intents", "entities"]
-template: 
-  Estas son las {intents} y las {entities} que tienes en tu modelo de clasificación de intenciones y entidades.
