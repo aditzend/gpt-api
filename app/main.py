@@ -26,7 +26,11 @@ from tools.kb import (
 )
 from tools.moderation import get_moderation_intent_entities
 
-from tools.emotions import classify_2_emotions_score_d
+from tools.emotions import (
+    classify_2_emotions_score_d,
+    classify_1_emotion_score_d,
+    classify_1_emotion_d,
+)
 from tools.openaidirect import system_completion_v1_turbo_t0
 
 import os
@@ -198,6 +202,36 @@ async def extract_emotions(request: ExtractEmotionsDto):
     user_input = jsonable_encoder(request.user_input)
     emotions = jsonable_encoder(request.emotions)
     response = await classify_2_emotions_score_d(
+        emotions=emotions, user_input=user_input
+    )
+    return response
+
+
+@app.post("/v3/emotions/2_score")
+async def extract_2_emotions_score(request: ExtractEmotionsDto):
+    user_input = jsonable_encoder(request.user_input)
+    emotions = jsonable_encoder(request.emotions)
+    response = await classify_2_emotions_score_d(
+        emotions=emotions, user_input=user_input
+    )
+    return response
+
+
+@app.post("/v3/emotions/1_score")
+async def extract_1_emotion_score(request: ExtractEmotionsDto):
+    user_input = jsonable_encoder(request.user_input)
+    emotions = jsonable_encoder(request.emotions)
+    response = await classify_1_emotion_score_d(
+        emotions=emotions, user_input=user_input
+    )
+    return response
+
+
+@app.post("/v3/emotions/1")
+async def extract_1_emotion(request: ExtractEmotionsDto):
+    user_input = jsonable_encoder(request.user_input)
+    emotions = jsonable_encoder(request.emotions)
+    response = await classify_1_emotion_d(
         emotions=emotions, user_input=user_input
     )
     return response
