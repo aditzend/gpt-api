@@ -29,6 +29,17 @@ qa = ""
 index = ""
 
 
+def delete_all_indexes():
+    global docsearch
+    global qa
+    global index
+    docsearch = ""
+    qa = ""
+    index = ""
+    print("Indexes deleted")
+    return "Indexes deleted"
+
+
 def connect_to_redis():
     return redis.Redis(host=redis_host, port=redis_port, db=0)
 

@@ -23,6 +23,7 @@ from tools.kb import (
     retrieval_ingest,
     ask_conversational,
     conversational_ingest,
+    delete_all_indexes,
 )
 from tools.moderation import get_moderation_intent_entities
 
@@ -246,4 +247,10 @@ async def system_completion(request: SystemPromptDto):
     prompt = jsonable_encoder(request.prompt)
     response = await system_completion_v1_turbo_t0(content=prompt)
     response = {"content": response}
+    return response
+
+
+@app.get("/v3/delete_all_kb_indexes")
+async def delete_all_kb_indexes():
+    response = delete_all_indexes()
     return response
