@@ -24,20 +24,23 @@ load_dotenv()
 redis_host = os.getenv("REDIS_HOST") or "localhost"
 redis_port = os.getenv("REDIS_PORT") or 6379
 
-docsearch = ""
-qa = ""
+allow_index_deletion = os.getenv("ALLOW_INDEX_DELETION")
+kb_temperature = os.getenv("KB_TEMPERATURE")
+
 index = ""
+docsearch = ""
 
 
 def delete_all_indexes():
-    global docsearch
-    global qa
-    global index
-    docsearch = ""
-    qa = ""
-    index = ""
-    print("Indexes deleted")
-    return "Indexes deleted"
+    if allow_index_deletion:
+        global index
+        index = ""
+        global docsearch
+        docsearch = ""
+        print("Indexes deleted")
+        return "Indexes deleted"
+    else:
+        return "Index deletion not allowed"
 
 
 def connect_to_redis():
@@ -106,6 +109,14 @@ async def retrieval_ingest(resources):
     return {"status": "READY_TO_ANSWER"}
 
 
+def ask_retrieval(user_input, session_id, personality):
+    print(f"QUESTION: {user_input} | Querying web...")
+    global index
+    result = index.query_with_sources(user_input)
+    print(result)
+    return result
+
+
 async def conversational_ingest(resources):
     print(
         f"INGESTING: {resources} | Ingesting conversational knowledge base..."
@@ -121,24 +132,18 @@ async def conversational_ingest(resources):
 
     global docsearch
     docsearch = Chroma.from_documents(texts, embeddings)
-    global qa
-    qa = ChatVectorDBChain.from_llm(OpenAI(temperature=0), docsearch)
-    return {"status": "READY_TO_ANSWER"}
-
-
-def ask_retrieval(user_input, session_id, personality):
-    print(f"QUESTION: {user_input} | Querying web...")
     global index
-    result = index.query_with_sources(user_input)
-    print(result)
-    return result
+    index = ChatVectorDBChain.from_llm(
+        OpenAI(temperature=kb_temperature), docsearch
+    )
+    return {"status": "READY_TO_ANSWER"}
 
 
 def ask_conversational(user_input, session_id, personality):
     print(f"QUESTION: {user_input} | Querying conversational model...")
     chat_history = get_chat_history(session_id)
     print(f"\n Chat history for session {session_id}: {chat_history}\n")
-    result = qa({"question": user_input, "chat_history": chat_history})
+    result = index({"question": user_input, "chat_history": chat_history})
     add_message_to_chat_history(
         session_id, user_message=user_input, response=result["answer"]
     )

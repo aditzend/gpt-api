@@ -42,13 +42,19 @@ load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 sentiment_url = os.getenv("SENTIMENT_URL")
+kb_conversational = os.getenv("KB_CONVERSATIONAL")
 
 app = FastAPI()
 
 
 @app.get("/version")
 async def version():
-    return {"message": "2023-03-29  v0.1.8 endpoints hasta v3"}
+    return {
+        "date": "2023-04-03",
+        "branch": "env_configs",
+        "version": "0.1.14",
+        "comments": "endpoints hasta v3",
+    }
 
 
 class SentimentDto(BaseModel):
@@ -152,8 +158,10 @@ class KbIngestDto(BaseModel):
 @app.post("/v2/kb/ingest")
 async def kb_ingest(request: KbIngestDto):
     resources = jsonable_encoder(request.resources)
-    response = await conversational_ingest(resources)
-    # response = await retrieval_ingest(resources)
+    if kb_conversational:
+        response = await conversational_ingest(resources)
+    else:
+        response = await retrieval_ingest(resources)
     return response
 
 
@@ -171,16 +179,18 @@ async def kb_ask(request: KbAskDto):
     # flagged = moderation["flagged"]
     # if flagged:
     #     return moderation
-    kb_response = ask_conversational(
-        user_input=request.user_input,
-        session_id=request.session_id,
-        personality=request.personality,
-    )
-    # kb_response = ask_retrieval(
-    #     user_input=request.user_input,
-    #     session_id=request.session_id,
-    #     personality=request.personality,
-    # )
+    if kb_conversational:
+        kb_response = await ask_conversational(
+            user_input=request.user_input,
+            session_id=request.session_id,
+            personality=request.personality,
+        )
+    else:
+        kb_response = await ask_retrieval(
+            user_input=request.user_input,
+            session_id=request.session_id,
+            personality=request.personality,
+        )
     seh = await sentiment_emotion_hate(request.user_input)
     response = {
         "session_id": request.session_id,
