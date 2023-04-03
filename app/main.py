@@ -51,8 +51,8 @@ app = FastAPI()
 async def version():
     return {
         "date": "2023-04-03",
-        "branch": "env_configs",
-        "version": "0.1.14",
+        "branch": "env-configs",
+        "version": "0.1.15",
         "comments": "endpoints hasta v3",
     }
 
