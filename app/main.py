@@ -49,12 +49,14 @@ app = FastAPI()
 
 @app.get("/version")
 async def version():
-    return {
+    version = {
         "date": "2023-04-03",
         "branch": "env-configs",
-        "version": "0.1.15",
+        "version": "0.1.16",
         "comments": "endpoints hasta v3",
     }
+    print(version)
+    return version
 
 
 class SentimentDto(BaseModel):
@@ -179,6 +181,7 @@ async def kb_ask(request: KbAskDto):
     # flagged = moderation["flagged"]
     # if flagged:
     #     return moderation
+    kb_response = {}
     if kb_conversational:
         kb_response = await ask_conversational(
             user_input=request.user_input,
