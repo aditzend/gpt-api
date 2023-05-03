@@ -18,12 +18,19 @@ from tools.classification import (
 )
 import requests
 
+from tools.kbdeeplake import (
+    v3_retrieval_ingest,
+    v3_ask_retrieval,
+)
+
 from tools.kb import (
     ask_retrieval,
     retrieval_ingest,
     ask_conversational,
     conversational_ingest,
     delete_all_indexes,
+    make_post_prompts_from_copy,
+    make_post_prompts_from_url,
 )
 from tools.moderation import get_moderation_intent_entities
 
@@ -167,6 +174,13 @@ async def kb_ingest(request: KbIngestDto):
     return response
 
 
+@app.post("/v3/kb/ingest")
+async def kb_ingest(request: KbIngestDto):
+    resources = jsonable_encoder(request.resources)
+    response = await v3_retrieval_ingest(resources)
+    return response
+
+
 class KbAskDto(BaseModel):
     session_id: str
     personality: str
@@ -201,6 +215,22 @@ async def kb_ask(request: KbAskDto):
         "sentiment": seh["sentiment"],
         "emotion": seh["emotion"],
         "hate_speech": seh["hate_speech"],
+        **kb_response,
+    }
+    return response
+
+
+@app.post("/v3/kb/ask")
+async def v3_kb_ask(request: KbAskDto):
+    kb_response = {}
+    kb_response = await v3_ask_retrieval(
+        user_input=request.user_input,
+        session_id=request.session_id,
+        personality=request.personality,
+    )
+    response = {
+        "session_id": request.session_id,
+        "user_input": request.user_input,
         **kb_response,
     }
     return response
@@ -266,4 +296,28 @@ async def system_completion(request: SystemPromptDto):
 @app.get("/v3/delete_all_kb_indexes")
 async def delete_all_kb_indexes():
     response = delete_all_indexes()
+    return response
+
+
+class MakePromptDto(BaseModel):
+    url: str
+    post_example: str
+
+
+@app.post("/v3/make_posts")
+async def make_social_posts(request: MakePromptDto):
+    url = jsonable_encoder(request.url)
+    post_example = jsonable_encoder(request.post_example)
+    response = make_post_prompts_from_url(url, post_example)
+    return response
+
+
+class MakePromptFromCopyDto(BaseModel):
+    article_text: str
+
+
+@app.post("/v3/make_posts_from_copy")
+async def make_social_posts(request: MakePromptFromCopyDto):
+    article_text = jsonable_encoder(request.article_text)
+    response = make_post_prompts_from_copy(article_text)
     return response
