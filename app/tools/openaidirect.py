@@ -29,3 +29,29 @@ async def system_completion_v1_turbo_t0(content: str):
     print(response["choices"][0]["message"]["content"])
     response = response["choices"][0]["message"]["content"]
     return response
+
+
+async def system_user_v1_turbo_t0(system: str, user: str):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": authorization,
+    }
+    payload = {
+        "model": "gpt-3.5-turbo",
+        "temperature": 0,
+        "messages": [
+            {
+                "content": system,
+                "role": "system",
+            },
+            {
+                "content": user,
+                "role": "user",
+            },
+        ],
+    }
+    raw = requests.post(completion_url, headers=headers, json=payload)
+    response = raw.json()
+    print(response["choices"][0]["message"]["content"])
+    response = response["choices"][0]["message"]["content"]
+    return response

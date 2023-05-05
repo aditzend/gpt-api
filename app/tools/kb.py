@@ -20,15 +20,6 @@ from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
 from chromadb.config import Settings
 
-# from chromadb import chromadb
-
-# chroma_client = chromadb.Client(
-#     Settings(
-#         chroma_api_impl="rest",
-#         chroma_server_host="localhost",
-#         chroma_server_http_port="8000",
-#     )
-# )
 
 load_dotenv()
 

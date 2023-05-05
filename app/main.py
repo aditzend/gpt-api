@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import json
+import time
 import openai
 from fastapi.encoders import jsonable_encoder
-from endpoints.v3 import (
-    extract_entities_external_prompt,
-)
+from faiss_ask import faiss_ask_retrieval
 
 from tools.sentiment import sentiment_emotion_hate
 from langchain.prompts import load_prompt
@@ -15,23 +14,30 @@ from tools.classification import (
     classify_intent_extract_entities,
     classify_intent_external_prompt,
     classify_entities_external_prompt,
+    bulk_intent_classifier,
 )
 import requests
 
-from tools.kbdeeplake import (
-    v3_retrieval_ingest,
-    v3_ask_retrieval,
+from tools.kbdeeplakecohere import (
+    deeplake_retrieval_ingest,
+    deeplake_ask_retrieval,
 )
 
-from tools.kb import (
-    ask_retrieval,
-    retrieval_ingest,
-    ask_conversational,
-    conversational_ingest,
-    delete_all_indexes,
-    make_post_prompts_from_copy,
-    make_post_prompts_from_url,
-)
+
+# from tools.kbweaviate import (
+#     weaviate_retrieval_ingest,
+#     weaviate_ask_retrieval,
+# )
+
+# from tools.kb import (
+#     ask_retrieval,
+#     retrieval_ingest,
+#     ask_conversational,
+#     conversational_ingest,
+#     delete_all_indexes,
+#     make_post_prompts_from_copy,
+#     make_post_prompts_from_url,
+# )
 from tools.moderation import get_moderation_intent_entities
 
 from tools.emotions import (
@@ -97,21 +103,6 @@ class IntentEntitiesDto(BaseModel):
     entities: list[dict]
 
 
-class KbResource(BaseModel):
-    url: str
-    type: str
-
-
-class KbIngestDto(BaseModel):
-    resources: list[KbResource]
-
-
-class ExtractEntitiesExternalPromptDto(BaseModel):
-    user_input: str
-    prompt: str
-    session_id: str
-
-
 class ExtractEntitiesExternalPromptDto(BaseModel):
     user_input: str
     prompt: str
@@ -167,17 +158,18 @@ class KbIngestDto(BaseModel):
 @app.post("/v2/kb/ingest")
 async def kb_ingest(request: KbIngestDto):
     resources = jsonable_encoder(request.resources)
-    if kb_conversational:
-        response = await conversational_ingest(resources)
-    else:
-        response = await retrieval_ingest(resources)
+    response = await deeplake_retrieval_ingest(resources)
+    # if kb_conversational:
+    #     response = await conversational_ingest(resources)
+    # else:
+    #     response = await retrieval_ingest(resources)
     return response
 
 
-@app.post("/v3/kb/ingest")
-async def kb_ingest(request: KbIngestDto):
+@app.post("/v3/deeplake/ingest")
+async def deeplake_ingest(request: KbIngestDto):
     resources = jsonable_encoder(request.resources)
-    response = await v3_retrieval_ingest(resources)
+    response = await deeplake_retrieval_ingest(resources)
     return response
 
 
@@ -187,43 +179,10 @@ class KbAskDto(BaseModel):
     user_input: str
 
 
-@app.post("/v2/kb/ask")
-async def kb_ask(request: KbAskDto):
-    # moderation = get_moderation_intent_entities(
-    #     request.user_input, request.session_id
-    # )
-    # flagged = moderation["flagged"]
-    # if flagged:
-    #     return moderation
+@app.post("/v3/deeplake/ask")
+async def deeplake_kb_ask(request: KbAskDto):
     kb_response = {}
-    if kb_conversational:
-        kb_response = await ask_conversational(
-            user_input=request.user_input,
-            session_id=request.session_id,
-            personality=request.personality,
-        )
-    else:
-        kb_response = await ask_retrieval(
-            user_input=request.user_input,
-            session_id=request.session_id,
-            personality=request.personality,
-        )
-    seh = await sentiment_emotion_hate(request.user_input)
-    response = {
-        "session_id": request.session_id,
-        "user_input": request.user_input,
-        "sentiment": seh["sentiment"],
-        "emotion": seh["emotion"],
-        "hate_speech": seh["hate_speech"],
-        **kb_response,
-    }
-    return response
-
-
-@app.post("/v3/kb/ask")
-async def v3_kb_ask(request: KbAskDto):
-    kb_response = {}
-    kb_response = await v3_ask_retrieval(
+    kb_response = await deeplake_ask_retrieval(
         user_input=request.user_input,
         session_id=request.session_id,
         personality=request.personality,
@@ -231,6 +190,44 @@ async def v3_kb_ask(request: KbAskDto):
     response = {
         "session_id": request.session_id,
         "user_input": request.user_input,
+        **kb_response,
+    }
+    return response
+
+
+@app.post("/v2/kb/ask")
+async def kb_ask(request: KbAskDto):
+    kb_response = await deeplake_ask_retrieval(
+        user_input=request.user_input,
+        session_id=request.session_id,
+        personality=request.personality,
+    )
+    # moderation = get_moderation_intent_entities(
+    #     request.user_input, request.session_id
+    # )
+    # flagged = moderation["flagged"]
+    # if flagged:
+    #     return moderation
+    # kb_response = {}
+    # if kb_conversational:
+    #     kb_response = await ask_conversational(
+    #         user_input=request.user_input,
+    #         session_id=request.session_id,
+    #         personality=request.personality,
+    #     )
+    # else:
+    #     kb_response = await ask_retrieval(
+    #         user_input=request.user_input,
+    #         session_id=request.session_id,
+    #         personality=request.personality,
+    #     )
+    # seh = await sentiment_emotion_hate(request.user_input)
+    response = {
+        "session_id": request.session_id,
+        "user_input": request.user_input,
+        # "sentiment": seh["sentiment"],
+        # "emotion": seh["emotion"],
+        # "hate_speech": seh["hate_speech"],
         **kb_response,
     }
     return response
@@ -293,31 +290,36 @@ async def system_completion(request: SystemPromptDto):
     return response
 
 
-@app.get("/v3/delete_all_kb_indexes")
-async def delete_all_kb_indexes():
-    response = delete_all_indexes()
+@app.post("/dev/faiss_ask")
+async def faiss_ask(request: KbAskDto):
+    user_input = jsonable_encoder(request.user_input)
+
+    kb_response = await faiss_ask_retrieval(
+        user_input=user_input,
+        session_id="dev",
+        personality="cool",
+    )
+    response = {
+        "session_id": "dev",
+        "user_input": user_input,
+        **kb_response,
+    }
     return response
 
 
-class MakePromptDto(BaseModel):
-    url: str
-    post_example: str
-
-
-@app.post("/v3/make_posts")
-async def make_social_posts(request: MakePromptDto):
-    url = jsonable_encoder(request.url)
-    post_example = jsonable_encoder(request.post_example)
-    response = make_post_prompts_from_url(url, post_example)
-    return response
-
-
-class MakePromptFromCopyDto(BaseModel):
-    article_text: str
-
-
-@app.post("/v3/make_posts_from_copy")
-async def make_social_posts(request: MakePromptFromCopyDto):
-    article_text = jsonable_encoder(request.article_text)
-    response = make_post_prompts_from_copy(article_text)
-    return response
+@app.post("/dev/bulk_intent_classifier")
+async def classifybulk(request: ExtractIntentAndEntitiesDto):
+    user_input = jsonable_encoder(request.user_input)
+    intents = jsonable_encoder(request.intents)
+    start_time = time.time()
+    response = await bulk_intent_classifier(
+        intents=intents,
+        user_input=user_input,
+    )
+    end_time = time.time()
+    intent_classification_time = end_time - start_time
+    return {
+        "user_input": user_input,
+        "intent": response,
+        "intent_classification_time": intent_classification_time,
+    }

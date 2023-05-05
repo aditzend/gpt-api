@@ -19,7 +19,7 @@ from langchain.text_splitter import (
 )
 from langchain.vectorstores import DeepLake
 from langchain.chains import ConversationalRetrievalChain, RetrievalQA
-from langchain.chat_models import ChatOpenAI
+from langchain.chat_models import ChatAnthropic
 
 
 load_dotenv()

@@ -3,6 +3,10 @@ from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 import json
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from tools.openaidirect import (
+    system_completion_v1_turbo_t0,
+    system_user_v1_turbo_t0,
+)
 
 import os
 from dotenv import load_dotenv
@@ -130,7 +134,6 @@ async def classify_entities_external_prompt(user_input, prompt):
 
 
 async def classify_intent_extract_entities(user_input, intents, entities):
-
     chat = ChatOpenAI(verbose=True, temperature=0)
     prompt = classify_intent_extract_entities_template_2.format(
         user_input=user_input,
@@ -156,7 +159,6 @@ async def classify_intent_extract_entities(user_input, intents, entities):
 async def classify_intent_extract_entities_creative(
     user_input, intents, entities
 ):
-
     llm = OpenAI(temperature=0.9)
     prompt = classify_intent_extract_entities_creative_template.format(
         user_input=user_input,
@@ -174,7 +176,6 @@ async def classify_intent_extract_entities_creative(
 async def classify_intent_extract_entities_english(
     user_input, intents, entities
 ):
-
     llm = OpenAI(temperature=0.9)
     prompt = classify_intent_extract_entities_english_template.format(
         user_input=user_input,
@@ -187,4 +188,15 @@ async def classify_intent_extract_entities_english(
     clean = clean.replace("'", '"')
     print(clean)
     response = json.loads(clean)
+    return response
+
+
+async def bulk_intent_classifier(intents, user_input):
+    system = (
+        "You are an intent classification model. INTENTS:"
+        f" {intents}\n###\nChoose the most appopiate intent for the user"
+        " message. Just respond with the intent name."
+    )
+    user = user_input
+    response = await system_user_v1_turbo_t0(system=system, user=user)
     return response

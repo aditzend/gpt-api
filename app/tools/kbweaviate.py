@@ -7,7 +7,7 @@ from langchain.document_loaders import (
 )
 from langchain.indexes import VectorstoreIndexCreator
 from langchain.docstore.document import Document
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings import CohereEmbeddings
 import requests
 from langchain.document_loaders import UnstructuredWordDocumentLoader
 import uuid
@@ -17,18 +17,16 @@ from langchain.text_splitter import (
     RecursiveCharacterTextSplitter,
     CharacterTextSplitter,
 )
-from langchain.vectorstores import DeepLake
 from langchain.chains import ConversationalRetrievalChain, RetrievalQA
 from langchain.chat_models import ChatOpenAI
-
+import weaviate
 
 load_dotenv()
+weaviate_url = os.getenv("WEAVIATE_URL")
+cohere_api_key = os.getenv("COHERE_API_KEY")
 
 
-kb_temperature = os.getenv("KB_TEMPERATURE")
-
-dataset_path = "/Users/alexander/clients/yzn/gpt-api/app/tools/edenordb"
-embeddings = OpenAIEmbeddings()
+embeddings = CohereEmbeddings(cohere_api_key=cohere_api_key)
 
 local_file = "/Users/alexander/clients/yzn/gpt-api/app/edenor.txt"
 
@@ -78,7 +76,7 @@ async def download_docx_file_and_ingest(resource):
     return UnstructuredWordDocumentLoader(local_path)
 
 
-async def deeplake_retrieval_ingest(resources):
+async def weaviate_retrieval_ingest(resources):
     print(f"DEEPLAKE INGESTING: {local_file} | Ingesting knowledge base...")
     loader = TextLoader(local_file)
     documents = loader.load()
@@ -88,7 +86,7 @@ async def deeplake_retrieval_ingest(resources):
     db.add_documents(pages)
 
 
-async def deeplake_ask_retrieval(user_input, session_id, personality):
+async def weaviate_ask_retrieval(user_input, session_id, personality):
     print(f"DEEPLAKE QUESTION: {user_input} | Querying db ...")
     db = DeepLake(
         dataset_path=dataset_path,
