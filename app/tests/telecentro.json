@@ -1,6 +1,0 @@
-Extract the slot values found in 'Me voy a movistar fibra me dan 100Mb por 3 lucas' and store them in a JSON object.
-Possible slots are: 
-'ORG': The company the customer is switching to (Extract as uppercase),
-'SERVICES': The services they have aquired to this company,
-'PRICE': How much they are paying for this service (Extract as integer),
-'DISCOUNT': The discount they are getting (Extract as integer)

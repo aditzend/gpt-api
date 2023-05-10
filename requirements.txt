@@ -4,3 +4,10 @@ openai
 uvicorn
 langchain
 redis
+youtube-transcript-api
+pytube
+pdfminer
+aiodns
+aiohttp[speedups]
+faiss-cpu
+tiktoken

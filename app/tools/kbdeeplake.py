@@ -27,10 +27,12 @@ load_dotenv()
 
 kb_temperature = os.getenv("KB_TEMPERATURE")
 
-dataset_path = "/Users/alexander/clients/yzn/gpt-api/app/tools/edenordb"
+dataset_path = (
+    "/Users/alexander/clients/yzn/gpt-api/app/datasets/deeplake/osde"
+)
 embeddings = OpenAIEmbeddings()
 
-local_file = "/Users/alexander/clients/yzn/gpt-api/app/edenor.txt"
+local_file = "/Users/alexander/clients/yzn/gpt-api/app/docs/osde.txt"
 
 
 # ingesting

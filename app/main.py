@@ -4,7 +4,8 @@ import json
 import time
 import openai
 from fastapi.encoders import jsonable_encoder
-from faiss_ask import faiss_ask_retrieval
+from faiss_kb import faiss_ask_retrieval, faiss_ingest
+from tools.kbdeeplake import deeplake_ask_retrieval, deeplake_retrieval_ingest
 
 from tools.sentiment import sentiment_emotion_hate
 from langchain.prompts import load_prompt
@@ -15,13 +16,15 @@ from tools.classification import (
     classify_intent_external_prompt,
     classify_entities_external_prompt,
     bulk_intent_classifier,
+    bulk_classifier,
+    bulk_entity_classifier,
 )
 import requests
 
-from tools.kbdeeplakecohere import (
-    deeplake_retrieval_ingest,
-    deeplake_ask_retrieval,
-)
+# from tools.kbdeeplakecohere import (
+#     deeplake_retrieval_ingest,
+#     deeplake_ask_retrieval,
+# )
 
 
 # from tools.kbweaviate import (
@@ -149,21 +152,22 @@ async def classify_v3_external_prompt(request: ExtractIntentExternalPromptDto):
 class KbResource(BaseModel):
     url: str
     type: str
+    index: str
 
 
 class KbIngestDto(BaseModel):
     resources: list[KbResource]
 
 
-@app.post("/v2/kb/ingest")
-async def kb_ingest(request: KbIngestDto):
-    resources = jsonable_encoder(request.resources)
-    response = await deeplake_retrieval_ingest(resources)
-    # if kb_conversational:
-    #     response = await conversational_ingest(resources)
-    # else:
-    #     response = await retrieval_ingest(resources)
-    return response
+# @app.post("/v2/kb/ingest")
+# async def kb_ingest(request: KbIngestDto):
+#     resources = jsonable_encoder(request.resources)
+#     response = await deeplake_retrieval_ingest(resources)
+#     if kb_conversational:
+#         response = await conversational_ingest(resources)
+#     else:
+#         response = await retrieval_ingest(resources)
+#     return response
 
 
 @app.post("/v3/deeplake/ingest")
@@ -174,13 +178,18 @@ async def deeplake_ingest(request: KbIngestDto):
 
 
 class KbAskDto(BaseModel):
-    session_id: str
-    personality: str
+    session_id: str = "test"
+    personality: str = "amable"
     user_input: str
+    language: str = "español de Argentina"
+    company_name: str = "TestCo"
+    default_response: str = "Lo siento, no puedo responder eso"
+    index: str = "main"
+    emoji_level: int = 0
 
 
 @app.post("/v3/deeplake/ask")
-async def deeplake_kb_ask(request: KbAskDto):
+async def deeplake_ask(request: KbAskDto):
     kb_response = {}
     kb_response = await deeplake_ask_retrieval(
         user_input=request.user_input,
@@ -195,42 +204,42 @@ async def deeplake_kb_ask(request: KbAskDto):
     return response
 
 
-@app.post("/v2/kb/ask")
-async def kb_ask(request: KbAskDto):
-    kb_response = await deeplake_ask_retrieval(
-        user_input=request.user_input,
-        session_id=request.session_id,
-        personality=request.personality,
-    )
-    # moderation = get_moderation_intent_entities(
-    #     request.user_input, request.session_id
-    # )
-    # flagged = moderation["flagged"]
-    # if flagged:
-    #     return moderation
-    # kb_response = {}
-    # if kb_conversational:
-    #     kb_response = await ask_conversational(
-    #         user_input=request.user_input,
-    #         session_id=request.session_id,
-    #         personality=request.personality,
-    #     )
-    # else:
-    #     kb_response = await ask_retrieval(
-    #         user_input=request.user_input,
-    #         session_id=request.session_id,
-    #         personality=request.personality,
-    #     )
-    # seh = await sentiment_emotion_hate(request.user_input)
-    response = {
-        "session_id": request.session_id,
-        "user_input": request.user_input,
-        # "sentiment": seh["sentiment"],
-        # "emotion": seh["emotion"],
-        # "hate_speech": seh["hate_speech"],
-        **kb_response,
-    }
-    return response
+# @app.post("/v2/kb/ask")
+# async def kb_ask(request: KbAskDto):
+#     kb_response = await deeplake_ask_retrieval(
+#         user_input=request.user_input,
+#         session_id=request.session_id,
+#         personality=request.personality,
+#     )
+#     moderation = get_moderation_intent_entities(
+#         request.user_input, request.session_id
+#     )
+#     flagged = moderation["flagged"]
+#     if flagged:
+#         return moderation
+#     kb_response = {}
+#     if kb_conversational:
+#         kb_response = await ask_conversational(
+#             user_input=request.user_input,
+#             session_id=request.session_id,
+#             personality=request.personality,
+#         )
+#     else:
+#         kb_response = await ask_retrieval(
+#             user_input=request.user_input,
+#             session_id=request.session_id,
+#             personality=request.personality,
+#         )
+#     seh = await sentiment_emotion_hate(request.user_input)
+#     response = {
+#         "session_id": request.session_id,
+#         "user_input": request.user_input,
+#         "sentiment": seh["sentiment"],
+#         "emotion": seh["emotion"],
+#         "hate_speech": seh["hate_speech"],
+#         **kb_response,
+#     }
+#     return response
 
 
 class ExtractEmotionsDto(BaseModel):
@@ -290,14 +299,40 @@ async def system_completion(request: SystemPromptDto):
     return response
 
 
+@app.post("/dev/faiss_ingest")
+async def faiss_ingestor(request: KbIngestDto):
+    resources = jsonable_encoder(request.resources)
+    response = await faiss_ingest(resources)
+    return response
+
+
+@app.post("/v2/kb/ingest")
+async def faiss_ingestor(request: KbIngestDto):
+    resources = jsonable_encoder(request.resources)
+    response = await faiss_ingest(resources)
+    return response
+
+
 @app.post("/dev/faiss_ask")
 async def faiss_ask(request: KbAskDto):
     user_input = jsonable_encoder(request.user_input)
+    index = jsonable_encoder(request.index)
+    company_name = jsonable_encoder(request.company_name)
+    default_response = jsonable_encoder(request.default_response)
+    language = jsonable_encoder(request.language)
+    session_id = jsonable_encoder(request.session_id)
+    personality = jsonable_encoder(request.personality)
+    emoji_level = jsonable_encoder(request.emoji_level)
 
     kb_response = await faiss_ask_retrieval(
         user_input=user_input,
-        session_id="dev",
-        personality="cool",
+        session_id=session_id,
+        index=index,
+        personality=personality,
+        company_name=company_name,
+        default_response=default_response,
+        language=language,
+        emoji_level=emoji_level,
     )
     response = {
         "session_id": "dev",
@@ -307,12 +342,95 @@ async def faiss_ask(request: KbAskDto):
     return response
 
 
+@app.post("/v2/kb/ask")
+async def faiss_ask(request: KbAskDto):
+    user_input = jsonable_encoder(request.user_input)
+    index = jsonable_encoder(request.index)
+    company_name = jsonable_encoder(request.company_name)
+    default_response = jsonable_encoder(request.default_response)
+    language = jsonable_encoder(request.language)
+    session_id = jsonable_encoder(request.session_id)
+    personality = jsonable_encoder(request.personality)
+    emoji_level = jsonable_encoder(request.emoji_level)
+
+    kb_response = await faiss_ask_retrieval(
+        user_input=user_input,
+        session_id=session_id,
+        index=index,
+        personality=personality,
+        company_name=company_name,
+        default_response=default_response,
+        language=language,
+        emoji_level=emoji_level,
+    )
+    response = {
+        "session_id": "dev",
+        "user_input": user_input,
+        **kb_response,
+    }
+    return response
+
+
+class BulkIntent(BaseModel):
+    n: str
+    d: str
+    k: int
+
+
+class BulkEntity(BaseModel):
+    n: str
+    d: str
+
+
+class BulkClassificationDto(BaseModel):
+    user_input: str
+    intents: list[BulkIntent]
+    entities: list[BulkEntity]
+
+
 @app.post("/dev/bulk_intent_classifier")
-async def classifybulk(request: ExtractIntentAndEntitiesDto):
+async def classify_intent_bulk(request: BulkClassificationDto):
     user_input = jsonable_encoder(request.user_input)
     intents = jsonable_encoder(request.intents)
     start_time = time.time()
     response = await bulk_intent_classifier(
+        intents=intents,
+        user_input=user_input,
+    )
+    end_time = time.time()
+    intent_classification_time = end_time - start_time
+    return {
+        "user_input": user_input,
+        "intent": response,
+        "intent_classification_time": intent_classification_time,
+    }
+
+
+@app.post("/dev/bulk_entity_classifier")
+async def classifybulk(request: BulkClassificationDto):
+    user_input = jsonable_encoder(request.user_input)
+    # intents = jsonable_encoder(request.intents)
+    entities = jsonable_encoder(request.entities)
+    start_time = time.time()
+    response = await bulk_entity_classifier(
+        user_input=user_input, entities=entities
+    )
+    entities = json.loads(response)
+    end_time = time.time()
+    entity_extraction_time = end_time - start_time
+    return {
+        "user_input": user_input,
+        **entities,
+        "entity_extraction_time": entity_extraction_time,
+    }
+
+
+@app.post("/dev/bulk_classifier")
+async def classify_all(request: BulkClassificationDto):
+    user_input = jsonable_encoder(request.user_input)
+    intents = jsonable_encoder(request.intents)
+    start_time = time.time()
+    response = await bulk_classifier(
         intents=intents,
         user_input=user_input,
     )

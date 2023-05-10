@@ -198,5 +198,34 @@ async def bulk_intent_classifier(intents, user_input):
         " message. Just respond with the intent name."
     )
     user = user_input
+    # response = intents
+    response = await system_user_v1_turbo_t0(system=system, user=user)
+    return response
+
+
+async def bulk_entity_classifier(entities, user_input):
+    system = (
+        f"You are an entity detection model. ENTITIES: {entities}\n###\n"
+        "If you detect an entity of the entities list in the user message,"
+        " respond with the entity name and the value of the entity."
+        "If you don't detect any entity, respond with an empty list."
+        "If an entity is not present in the user message, do not return it"
+        "Do not create entities that are not in the entities list."
+        "respond only with a valid JSON, no pretext, no posttext"
+    )
+    user = user_input
+    # response = intents
+    response = await system_user_v1_turbo_t0(system=system, user=user)
+    return response
+
+
+async def bulk_classifier(user_input, intents, entities):
+    system = (
+        "You are an intent classification model. INTENTS:"
+        f" {intents}\n###\nChoose the most appopiate intent for the user"
+        " message. Just respond with the intent name."
+    )
+    user = user_input
+    # response = intents
     response = await system_user_v1_turbo_t0(system=system, user=user)
     return response

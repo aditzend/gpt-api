@@ -148,68 +148,6 @@ def ask_conversational(user_input, session_id, personality):
     return result
 
 
-def make_post_prompts_from_copy(copy):
-    post_example = f"""
-      Ya se puede jugar con GPT-4. 🤯
-
-      Cómo hacer para entrar?
-
-      El preview está abierto solo para los usuarios de ChatGPT Plus, una subscripción que cuesta 20 USD/mes.
-
-      Como somos varios los que queremos probarlo cuanto antes, OpenAI puso un tope a la cantidad de mensajes que podemos enviarle: 100 mensajes cada 4 horas.
-
-      Alguien ya lo estuvo probando?
-
-      #tecnologia#Automation#AI#machinelearning
-          """
-    prompt = f"""
-      Act as the best post writer in the world. Use this post as an example of your writing style: 
-
-      {post_example}
-
-      ###
-
-      Write a LinkedIn post, an Instagram post and a tweet about the following article. All 3 posts must be in argentinean spanish. 
-
-      Article:
-
-      {copy}
-      """
-    return prompt
-
-
-def make_post_prompts_from_url(url, post_example):
-    article = WebBaseLoader(url)
-    article = article.load()
-    article = article[0].page_content
-    prompt = f"""
-      Act as the best post writer in the world. Use this post as an example of your writing style: 
-
-      {post_example}
-
-      ###
-
-      Write a LinkedIn post, an Instagram post and a tweet about the following article. All 3 posts must be in argentinean spanish. 
-
-      Article:
-
-      {article}
-      """
-    return prompt
-
-
-def delete_all_indexes():
-    if allow_index_deletion:
-        global index
-        index = ""
-        global docsearch
-        docsearch = ""
-        print("Indexes deleted")
-        return "Indexes deleted"
-    else:
-        return "Index deletion not allowed"
-
-
 def connect_to_redis():
     return redis.Redis(host=redis_host, port=redis_port, db=0)
 
