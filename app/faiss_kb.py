@@ -387,12 +387,11 @@ async def ask(
     source_retrieval_end = time.time()
     emoji_prompt = emoji_prompter(emoji_level)
     source_retrieval_time = source_retrieval_end - source_retrieval_start
-    prompt_10 = f"""
-                You are the best assistant of the {company_name} organization. Answer the user's question using ONLY the data between the three backticks. Don't try to make up an answer.
+    prompt_12 = f"""
+                You are the best assistant of an organization named '{company_name}'. Answer the user's question using ONLY the data between the three backticks. Don't try to make up an answer.
         Go through these steps:
         - Step 1: Read the DATA and the user's question, if there is no relation between the data and the question just respond with ```{default_response}```. 
-        - Step 2: Create a very short answer according to the TONE and in a way that is very easy to read in a chat conversation.
-        - Step 3: {emoji_prompt}
+        - Step 2: Create a very short answer according to the TONE and in a way that is very easy to read in a chat conversation. {emoji_prompt}.
 
         DATA: ```{first_source}```
 
@@ -400,7 +399,7 @@ async def ask(
 
         """
 
-    system_prompt = prompt_10
+    system_prompt = prompt_12
     user = user_input
     completion = await system_user_v1_turbo_t0_full(
         system=system_prompt, user=user
@@ -424,14 +423,44 @@ local_file = "/Users/alexander/clients/yzn/gpt-api/app/docs/osde.txt"
 
 
 async def faiss_ingest(resources):
-    logger.info("[[ FAISS Ingesting resources ]]")
+    logger.info("[[ faiss_kb ]] faiss_ingest starting ...")
     try:
         for resource in resources:
-            logger.info(f"[[ Ingesting {resource} ]]")
+            logger.info(f"[[ faiss_kb ]] Ingesting {resource} ")
             ingest_resource(resource)
     except Exception as e:
         logger.error(f"[[ Error ingesting resources: {e} ]]")
         return {"status": "ERROR", "message": f"{e}"}
+    return {"status": "READY_TO_ANSWER"}
+
+
+async def faiss_retrieval(
+    user_input: str,
+    index: str = "main",
+    ranking_size: int = 3,
+):
+    db = FAISS.load_local(index, embeddings=OpenAIEmbeddings())
+    source_retrieval_start = time.time()
+    sources = db.similarity_search_with_score(user_input)
+    logger.info(f"[[retrieve]] sources: {min(ranking_size,len(sources))}")
+    logger.info(
+        "[[retrieve]] sources:"
+        f" {sources[min(ranking_size,len(sources))][0].page_content}"
+    )
+    ranking_limit = min(ranking_size, len(sources))
+    chunks = [sources[i][0].page_content for i in range(0, ranking_limit)]
+    metadatas = [sources[i][0].metadata for i in range(0, ranking_limit)]
+    scores = [
+        str(round(1 - sources[i][1], 2)) for i in range(0, ranking_limit)
+    ]
+    source_retrieval_end = time.time()
+    source_retrieval_time = source_retrieval_end - source_retrieval_start
+    return {
+        "chunks": chunks,
+        "metadatas": metadatas,
+        "scores": scores,
+        "source_retrieval_time": round(source_retrieval_time, 2),
+    }
 
 
 async def faiss_ask_retrieval(
