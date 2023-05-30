@@ -16,6 +16,11 @@ from ingestors.pptx_ingestors import download_pptx_file_and_ingest
 from ingestors.txt_ingestors import download_txt_file_and_ingest
 import logging
 from dotenv import load_dotenv
+import os
+import requests
+import json
+
+# import sseclient
 
 logger = logging.getLogger("uvicorn")
 
@@ -128,15 +133,18 @@ async def faiss_retrieval(
     index: str = "main",
     ranking_size: int = 3,
 ):
-    db = FAISS.load_local(index, embeddings=OpenAIEmbeddings())
+    INDEXES_PATH = os.getenv("INDEXES_PATH")
+    db = FAISS.load_local(
+        f"{INDEXES_PATH}/{index}", embeddings=OpenAIEmbeddings()
+    )
     source_retrieval_start = time.time()
     sources = db.similarity_search_with_score(user_input)
-    logger.info(f"[[retrieve]] sources: {min(ranking_size,len(sources))}")
-    logger.info(
-        "[[retrieve]] sources:"
-        f" {sources[min(ranking_size,len(sources))][0].page_content}"
-    )
     ranking_limit = min(ranking_size, len(sources))
+    logger.debug(
+        f"[[retrieve]] sources: {len(sources)} ranking_size:"
+        f" {ranking_size} ranking_limit: {ranking_limit}"
+    )
+
     chunks = [sources[i][0].page_content for i in range(0, ranking_limit)]
     metadatas = [sources[i][0].metadata for i in range(0, ranking_limit)]
     scores = [
@@ -221,3 +229,41 @@ def emoji_prompter(level):
         return "Use emojis liberally"
     if level == 4:
         return "Use emojis excessively and in every sentence"
+
+
+API_KEY = os.getenv("OPENAI_API_KEY") or "OPENAI_API_KEY"
+
+
+# async def faiss_ask_streaming():
+#     reqUrl = "https://api.openai.com/v1/chat/completions"
+#     reqHeaders = {
+#         "Accept": "text/event-stream",
+#         "Authorization": "Bearer " + API_KEY,
+#     }
+#     reqBody = {
+#         "model": "gpt-3.5-turbo",
+#         "messages": [{"role": "user", "content": "cual es el mejor cafe?"}],
+#         "max_tokens": 200,
+#         "temperature": 1,
+#         "stream": True,
+#     }
+#     request = requests.post(
+#         reqUrl, stream=True, headers=reqHeaders, json=reqBody
+#     )
+#     client = sseclient.SSEClient(request)
+#     logger.debug(client)
+#     response = ""
+#     for event in client.events():
+#         if (event.data != "[DONE]") and (
+#             "content" in json.loads(event.data)["choices"][0]["delta"]
+#         ):
+#             response += json.loads(event.data)["choices"][0]["delta"][
+#                 "content"
+#             ]
+#             print(
+#                 json.loads(event.data)["choices"][0]["delta"]["content"],
+#                 end="",
+#                 flush=True,
+#             )
+#             # if "." in response:
+#     return response

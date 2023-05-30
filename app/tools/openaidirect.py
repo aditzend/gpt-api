@@ -65,6 +65,7 @@ async def system_user_v1_turbo_t0_full(system: str, user: str):
     payload = {
         "model": "gpt-3.5-turbo",
         "temperature": 0,
+        "max_tokens": 200,
         "messages": [
             {
                 "content": system,

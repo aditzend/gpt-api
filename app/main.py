@@ -5,7 +5,12 @@ import time
 import openai
 import os
 from fastapi.encoders import jsonable_encoder
-from tools.faiss_kb import faiss_retrieval, faiss_ask_retrieval, faiss_ingest
+from tools.faiss_kb import (
+    faiss_retrieval,
+    faiss_ask_retrieval,
+    faiss_ingest,
+    # faiss_ask_streaming,
+)
 from tools.sentiment import sentiment_emotion_hate
 from tools.classification import (
     bulk_intent_classifier,
@@ -62,10 +67,10 @@ app = FastAPI()
 @app.get("/version")
 async def version():
     version = {
-        "date": "2023-05-26",
-        "branch": "ask-2",
-        "version": "0.2.6",
-        "comments": "dos resultados por defecto en ask",
+        "date": "2023-05-27",
+        "branch": "stream",
+        "version": "0.2.7",
+        "comments": "openai streaming",
     }
     print(version)
     return version
@@ -95,22 +100,18 @@ async def faiss_ask_index(request: KbAskDto):
     personality = jsonable_encoder(request.personality)
     emoji_level = jsonable_encoder(request.emoji_level)
 
-    kb_response = await faiss_ask_retrieval(
-        user_input=user_input,
-        session_id=session_id,
-        index=index,
-        personality=personality,
-        company_name=company_name,
-        default_response=default_response,
-        language=language,
-        emoji_level=emoji_level,
-    )
-    response = {
-        "session_id": session_id,
-        "user_input": user_input,
-        **kb_response,
-    }
-    return response
+    # kb_response = await faiss_ask_streaming(
+    #     user_input=user_input,
+    #     session_id=session_id,
+    #     index=index,
+    #     personality=personality,
+    #     company_name=company_name,
+    #     default_response=default_response,
+    #     language=language,
+    #     emoji_level=emoji_level,
+    # )
+    # kb_response = await faiss_ask_streaming()
+    return "Not available"
 
 
 # Retrieval
