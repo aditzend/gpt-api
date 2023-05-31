@@ -48,5 +48,11 @@ def download_csv_file_and_ingest(resource):
         index_db.add_documents(chunks)
 
     index_db.save_local(f"indexes/{index}")
+
+    if not index == "main":
+        main_db = FAISS.load_local("main", embeddings=embeddings)
+        main_db.add_documents(chunks)
+        main_db.save_local(f"indexes/main")
+
     os.remove(local_path)
     logger.info(f"Index {index} saved locally! {index_db.docstore._dict}")
