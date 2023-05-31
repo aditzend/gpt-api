@@ -6,7 +6,7 @@ import uuid
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
-from langchain.document_loaders import UnstructuredHTMLLoader
+from langchain.document_loaders import WebBaseLoader
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def download_html_file_and_ingest(resource):
         f.write(response.content)
     logger.info(f"File downloaded successfully to {local_path} !")
 
-    loader = UnstructuredHTMLLoader(local_path)
+    loader = WebBaseLoader(url)
     doc = loader.load()
     text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=500, chunk_overlap=100
@@ -38,11 +38,5 @@ def download_html_file_and_ingest(resource):
         index_db.add_documents(chunks)
 
     index_db.save_local(f"indexes/{index}")
-
-    if not index == "main":
-        main_db = FAISS.load_local("main", embeddings=embeddings)
-        main_db.add_documents(chunks)
-        main_db.save_local(f"indexes/main")
-
     os.remove(local_path)
     logger.info(f"Index {index} saved locally! {index_db.docstore._dict}")
