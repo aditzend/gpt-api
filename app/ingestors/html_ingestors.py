@@ -8,7 +8,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.document_loaders import UnstructuredHTMLLoader
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn")
 
 
 def download_html_file_and_ingest(resource):
@@ -16,15 +16,19 @@ def download_html_file_and_ingest(resource):
     url = resource["url"]
     index = resource["index"]
     index_exists: bool = check_index_existance(index)
+    # main_index_exists: bool = check_index_existance("main")
 
     local_path = f"./resources/{index}-{str(uuid.uuid1())}.html"
 
     response = requests.get(url)
+
     with open(local_path, "wb") as f:
         f.write(response.content)
+
     logger.info(f"File downloaded successfully to {local_path} !")
 
     loader = UnstructuredHTMLLoader(local_path)
+
     doc = loader.load()
     text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=500, chunk_overlap=100
@@ -39,10 +43,23 @@ def download_html_file_and_ingest(resource):
 
     index_db.save_local(f"indexes/{index}")
 
-    if not index == "main":
-        main_db = FAISS.load_local("main", embeddings=embeddings)
-        main_db.add_documents(chunks)
-        main_db.save_local(f"indexes/main")
+    # if index != "main":
+    # logger.debug(
+    #     f"Adding documents to main index and '{index}' index"
+    #     " simultaneously"
+    # )
+    # if main_index_exists:
+    #     main_db = FAISS.load_local("indexes/main", embeddings=embeddings)
+    # else:
+    #     main_db = FAISS.from_documents(chunks, embedding=embeddings)
+    # main_db.add_documents(chunks)
+    # main_db.save_local(f"indexes/main")
 
     os.remove(local_path)
     logger.info(f"Index {index} saved locally! {index_db.docstore._dict}")
+    # return {
+    #     "index": index,
+    #     "index_exists": index_exists,
+    #     "main_index_exists": main_index_exists,
+    #     "status": "success",
+    # }

@@ -68,9 +68,9 @@ app = FastAPI()
 async def version():
     version = {
         "date": "2023-05-27",
-        "branch": "stream",
-        "version": "0.2.7",
-        "comments": "openai streaming",
+        "branch": "028",
+        "version": "0.2.8",
+        "comments": "html loading and main db duplication",
     }
     print(version)
     return version
@@ -119,7 +119,7 @@ async def faiss_ask_index(request: KbAskDto):
 async def faiss_retrieve(request: KbRetrievalDto):
     response = await faiss_retrieval(
         user_input=jsonable_encoder(request.user_input),
-        index=jsonable_encoder(request.index),
+        index=jsonable_encoder(request.index) or "main",
         ranking_size=jsonable_encoder(request.ranking_size),
     )
     return response

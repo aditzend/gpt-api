@@ -12,6 +12,7 @@ from ingestors.image_ingestors import (
     download_jpg_file_and_ingest,
     download_png_file_and_ingest,
 )
+from ingestors.site_ingestors import ingest_site
 from ingestors.pptx_ingestors import download_pptx_file_and_ingest
 from ingestors.txt_ingestors import download_txt_file_and_ingest
 import logging
@@ -28,7 +29,7 @@ load_dotenv()
 
 
 def ingest_resource(resource):
-    if resource["type"] == "web":
+    if resource["type"] == "html":
         download_html_file_and_ingest(resource)
     if resource["type"] == "docx":
         download_docx_file_and_ingest(resource)
@@ -46,6 +47,8 @@ def ingest_resource(resource):
         download_png_file_and_ingest(resource)
     if resource["type"] == "youtube":
         youtube_ingest(resource)
+    if resource["type"] == "site":
+        ingest_site(resource)
 
 
 def custom_format(text):

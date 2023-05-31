@@ -13,8 +13,8 @@ class KbIngestDto(BaseModel):
 
 class KbRetrievalDto(BaseModel):
     user_input: str
-    index: str = "main"
-    ranking_size: int = 3
+    index: str = Field(default="main")
+    ranking_size: int = Field(default=3)
 
 
 class FlexKbResource(BaseModel):
